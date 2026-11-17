@@ -1,0 +1,660 @@
+
+/* ==========================
+   VARIABLES Y COLORES
+========================== */
+
+:root {
+    --bg: #f3f6f4;
+    --panel: #fff;
+    --ink: #14231d;
+    --mute: #5d6f67;
+    --line: #d8e2dc;
+    --accent: #0f8a6a;
+    --ok: #1f9d55;
+    --warn: #d99a00;
+    --bad: #d64545;
+    --cam: #0e1714;
+
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #0d1512;
+        --panel: #16211c;
+        --ink: #e8f1ec;
+        --mute: #92a69c;
+        --line: #27372f;
+        --accent: #3ddba8;
+        --cam: #050908;
+    }
+}
+
+/* ==========================
+   ESTILOS GENERALES
+========================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+    line-height: 1.45;
+}
+
+.app {
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    min-height: 100vh;
+}
+
+/* ==========================
+   MENÚ LATERAL
+========================== */
+
+nav {
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    padding: 18px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.brand {
+    font-size: 20px;
+    font-weight: 700;
+    padding: 4px 10px 16px;
+    letter-spacing: .2px;
+}
+
+.brand span {
+    color: var(--accent);
+}
+
+nav button {
+    all: unset;
+    cursor: pointer;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: var(--mute);
+    font-size: 15px;
+}
+
+nav button:hover {
+    background: var(--bg);
+    color: var(--ink);
+}
+
+nav button.on {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+}
+
+nav button:focus-visible,
+.btn:focus-visible,
+.key:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.stat {
+    margin-top: auto;
+    font-size: 13px;
+    color: var(--mute);
+    padding: 10px;
+}
+
+.stat b {
+    color: var(--ok);
+}
+
+/* ==========================
+   CONTENIDO PRINCIPAL
+========================== */
+
+main {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+h1 {
+    font-size: 22px;
+    margin: 0;
+}
+
+.pill {
+    font-size: 13px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 4px 10px;
+    border-radius: 99px;
+    color: var(--mute);
+}
+
+/* ==========================
+   MÓDULOS
+========================== */
+
+.mode {
+    display: none;
+    gap: 16px;
+}
+
+.mode.on {
+    display: grid;
+}
+
+.row {
+    grid-template-columns:
+        minmax(0, 1.6fr)
+        minmax(0, 1fr);
+}
+
+/* ==========================
+   CÁMARA
+========================== */
+
+.cam {
+    position: relative;
+    background: var(--cam);
+    border-radius: 14px;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    border: 4px solid transparent;
+    transition: border-color .2s;
+}
+
+.cam.ok {
+    border-color: var(--ok);
+}
+
+.cam svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Cámara real y puntos MediaPipe */
+
+.cam video,
+.cam canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transform: scaleX(-1);
+}
+
+.cam canvas {
+    pointer-events: none;
+    z-index: 1;
+}
+
+.cam .tag {
+    z-index: 2;
+}
+
+.tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 12px;
+    color: #cfe;
+    background: rgba(0, 0, 0, .55);
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.fps {
+    left: auto;
+    right: 10px;
+}
+
+/* ==========================
+   TARJETAS
+========================== */
+
+.card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.big {
+    font-size: 104px;
+    line-height: 1;
+    font-weight: 700;
+    text-align: center;
+    color: var(--accent);
+    margin: 4px 0;
+}
+
+.lbl {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--mute);
+    margin: 8px 0 5px;
+}
+
+.bar {
+    height: 10px;
+    background: var(--line);
+    border-radius: 9px;
+    overflow: hidden;
+}
+
+.bar i {
+    display: block;
+    height: 100%;
+    width: 92%;
+    background: var(--ok);
+}
+
+.ring {
+    width: 84px;
+    height: 84px;
+    margin: 12px auto 0;
+    display: block;
+}
+
+/* ==========================
+   TEXTO TRADUCIDO
+========================== */
+
+.out {
+    font-size: 26px;
+    min-height: 42px;
+    letter-spacing: 2px;
+    word-break: break-word;
+}
+
+.cur {
+    display: inline-block;
+    width: 2px;
+    height: 26px;
+    background: var(--accent);
+    vertical-align: middle;
+    animation: b 1s steps(1) infinite;
+}
+
+@keyframes b {
+    50% {
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cur {
+        animation: none;
+    }
+}
+
+/* ==========================
+   BOTONES
+========================== */
+
+.sug {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 10px 0;
+}
+
+.chip {
+    border: 1px solid var(--line);
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 14px;
+    cursor: pointer;
+    background: var(--bg);
+}
+
+.chip:hover {
+    border-color: var(--accent);
+}
+
+.btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    all: unset;
+    cursor: pointer;
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    font-size: 14px;
+}
+
+.btn:hover {
+    border-color: var(--accent);
+}
+
+.btn.p {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+}
+
+/* ==========================
+   APRENDIZAJE
+========================== */
+
+.target {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.ref {
+    width: 110px;
+    height: 110px;
+    border-radius: 12px;
+    background: var(--bg);
+    border: 1px dashed var(--line);
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    color: var(--mute);
+    text-align: center;
+    padding: 8px;
+}
+
+/* ==========================
+   MINIJUEGO
+========================== */
+
+.word {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+.word span {
+    width: 44px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    font-size: 28px;
+    font-weight: 700;
+    border-radius: 8px;
+    border: 2px solid var(--line);
+}
+
+.word .d {
+    background: var(--ok);
+    border-color: var(--ok);
+    color: #fff;
+}
+
+.word .c {
+    border-color: var(--accent);
+}
+
+.scores {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+
+.scores b {
+    display: block;
+    font-size: 28px;
+}
+
+.scores small {
+    color: var(--mute);
+}
+
+/* ==========================
+   DICCIONARIO
+========================== */
+
+.grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fill, minmax(54px, 1fr));
+    gap: 8px;
+}
+
+.key {
+    all: unset;
+    cursor: pointer;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    font-weight: 700;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+}
+
+.key:hover,
+.key.on {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+/* ==========================
+   ENTRENAMIENTO
+========================== */
+
+input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 15px;
+    font-family: inherit;
+}
+
+.prog {
+    margin-top: 12px;
+}
+
+/* ==========================
+   HISTORIAL
+========================== */
+
+ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+li {
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+    gap: 10px;
+}
+
+li small {
+    color: var(--mute);
+}
+
+/* ==========================
+   CLASES AUXILIARES
+========================== */
+
+.lbl-center {
+    justify-content: center;
+}
+
+.full-span {
+    grid-column: 1 / -1;
+}
+
+.no-margin {
+    margin: 0;
+}
+
+.timer-fill {
+    width: 60% !important;
+    background: var(--warn) !important;
+}
+
+.ref-large {
+    width: 100%;
+    height: 150px;
+}
+
+.cam-wide {
+    aspect-ratio: 16 / 9;
+}
+
+.sample-fill {
+    width: 48% !important;
+}
+
+.empty-fill {
+    width: 0 !important;
+}
+
+.single-column {
+    grid-template-columns: 1fr;
+}
+
+.top-actions {
+    margin-top: 14px;
+}
+
+.bar .confidence-fill {
+    width: 0;
+}
+
+/* ==========================
+   DISEÑO RESPONSIVO
+========================== */
+
+@media (max-width: 820px) {
+
+    .app {
+        grid-template-columns: 1fr;
+    }
+
+    nav {
+        flex-direction: row;
+        overflow-x: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .brand,
+    .stat {
+        display: none;
+    }
+
+    nav button {
+        white-space: nowrap;
+    }
+
+    .row {
+        grid-template-columns: 1fr;
+    }
+
+    .big {
+        font-size: 76px;
+    }
+}
+
+/* Cámara real */
+.cam video,
+.cam canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transform: scaleX(-1);
+}
+
+.cam canvas {
+    pointer-events: none;
+    z-index: 1;
+}
+
+.cam .tag {
+    z-index: 2;
+}
+
+/* Controles de entrenamiento */
+.section-title {
+    font-size: 18px;
+    margin: 0;
+}
+
+#e label {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 5px;
+    color: var(--mute);
+}
+
+.capture-status,
+.hint {
+    color: var(--mute);
+    font-size: 13px;
+}
+
+.dataset-summary {
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+}
+
+.bar i.capture-progress {
+    width: 0;
+    background: var(--ok);
+    transition: width .15s ease;
+}
+
+button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
