@@ -1,0 +1,19 @@
+
+# Entorno virtual de Python
+.venv/
+venv/
+
+# Archivos temporales de Python
+__pycache__/
+*.pyc
+
+# Dataset descargado de Kaggle
+backend/data/
+
+# Variables privadas
+.env
+.env.*
+
+# Archivos temporales
+*.zip
+.ipynb_checkpoints/

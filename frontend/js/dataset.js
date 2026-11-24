@@ -1,650 +1,518 @@
 
-// ====================================
-// SEÑALIVE - DATASET.JS
-// Recolección de datos para TensorFlow
-// ====================================
+// ========================================
+// SEÑALIVE - CAMERA.JS
+// DETECCIÓN DE HASTA DOS MANOS
+// ========================================
 
-// Configuración
-const CLAVE = "senalive_dataset_v1";
+// Elementos de las dos cámaras
+const vistas = {
+    t: {
+        video: document.getElementById("video"),
+        canvas: document.getElementById("overlay"),
+        estado: document.getElementById("cameraStatus")
+    },
+    e: {
+        video: document.getElementById("trainVideo"),
+        canvas: document.getElementById("trainOverlay"),
+        estado: document.getElementById("trainCameraStatus")
+    }
+};
 
-// Una muestra cada 160 milisegundos
-const INTERVALO_MS = 160;
+const estadoGeneral =
+    document.getElementById("connectionStatus");
 
-// Límite de muestras almacenadas
-const LIMITE_MUESTRAS = 5000;
+// Utilizar la misma versión para JS y WASM
+const BASE_MEDIAPIPE =
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21";
 
+const MODELO =
+    "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 
-// ====================================
-// ELEMENTOS HTML
-// ====================================
+// Variables globales del módulo
+let stream = null;
+let detector = null;
+let conexiones = [];
 
-const letraInput =
-    document.getElementById("captureLabel");
+let ultimoVideo = null;
+let ultimoTiempo = -1;
+let ultimoTimestamp = -1;
 
-const personaInput =
-    document.getElementById("personId");
+let animacion = null;
+let iniciando = false;
+let estadoAnterior = "";
 
-const objetivoInput =
-    document.getElementById("captureTarget");
+// ========================================
+// MOSTRAR ESTADO
+// ========================================
 
-const botonInicio =
-    document.getElementById("startCapture");
+function mostrarEstado(mensaje) {
 
-const botonStop =
-    document.getElementById("stopCapture");
+    if (mensaje === estadoAnterior) return;
 
-const botonExportar =
-    document.getElementById("downloadDataset");
+    estadoAnterior = mensaje;
 
-const botonBorrar =
-    document.getElementById("clearDataset");
+    for (const vista of Object.values(vistas)) {
 
-const contador =
-    document.getElementById("captureCounter");
+        if (vista.estado) {
+            vista.estado.textContent = mensaje;
+        }
+    }
 
-const progreso =
-    document.getElementById("captureProgress");
+    if (estadoGeneral) {
+        estadoGeneral.textContent = mensaje;
+    }
+}
 
-const estado =
-    document.getElementById("captureStatus");
+// ========================================
+// VERIFICAR ELEMENTOS HTML
+// ========================================
 
-const total =
-    document.getElementById("datasetTotal");
+function verificarElementos() {
 
-const desglose =
-    document.getElementById("datasetCounts");
+    for (const [modo, vista] of Object.entries(vistas)) {
 
+        for (const [nombre, elemento] of Object.entries(vista)) {
 
-// ====================================
-// VARIABLES
-// ====================================
+            if (!elemento) {
+                throw new Error(
+                    `Falta ${nombre} en el módulo ${modo}`
+                );
+            }
+        }
+    }
+}
 
-let registros = cargarRegistros();
+// ========================================
+// IDENTIFICAR MÓDULO ACTIVO
+// ========================================
 
-let capturando = false;
-let capturadas = 0;
-let meta = 50;
+function obtenerModoActivo() {
 
-let etiquetaActual = "A";
-let participanteActual = "P01";
-let sesionActual = "";
+    if (
+        document.getElementById("e")
+            ?.classList.contains("on")
+    ) {
+        return "e";
+    }
 
-let ultimoRegistro = 0;
+    if (
+        document.getElementById("t")
+            ?.classList.contains("on")
+    ) {
+        return "t";
+    }
 
+    return null;
+}
 
-// ====================================
-// CARGAR DATOS GUARDADOS
-// ====================================
+// ========================================
+// ACTIVAR LA VISTA ACTUAL
+// ========================================
 
-function cargarRegistros() {
+async function activarVista() {
+
+    if (!stream) return;
+
+    const modo = obtenerModoActivo();
+
+    // Pausar las vistas que no estén activas
+    for (const [nombre, vista] of Object.entries(vistas)) {
+
+        if (nombre !== modo) {
+
+            vista.video.pause();
+
+            const ctx = vista.canvas.getContext("2d");
+
+            ctx?.clearRect(
+                0,
+                0,
+                vista.canvas.width,
+                vista.canvas.height
+            );
+        }
+    }
+
+    if (!modo) return;
+
+    const vista = vistas[modo];
+
+    if (vista.video.srcObject !== stream) {
+        vista.video.srcObject = stream;
+    }
+
+    // Reproducir video
+    await vista.video.play();
+
+    // Ajustar tamaño del canvas
+    if (vista.video.videoWidth > 0) {
+
+        vista.canvas.width =
+            vista.video.videoWidth;
+
+        vista.canvas.height =
+            vista.video.videoHeight;
+    }
+
+    // Reiniciar control de fotogramas
+    ultimoVideo = null;
+    ultimoTiempo = -1;
+}
+
+// ========================================
+// INICIAR CÁMARA Y MEDIAPIPE
+// ========================================
+
+async function iniciar() {
+
+    if (iniciando) return;
+
+    if (stream && detector) {
+        await activarVista();
+        return;
+    }
+
+    iniciando = true;
 
     try {
 
-        const datos = JSON.parse(
-            localStorage.getItem(CLAVE) || "[]"
-        );
+        verificarElementos();
 
-        if (!Array.isArray(datos)) {
-            return [];
+        if (!navigator.mediaDevices?.getUserMedia) {
+            throw new Error(
+                "Abre la página desde localhost o HTTPS."
+            );
         }
 
-        return datos.filter(muestra =>
-            muestra &&
-            Array.isArray(muestra.features) &&
-            muestra.features.length === 63
+        // Solicitar cámara una sola vez
+        if (!stream) {
+
+            mostrarEstado("Solicitando cámara...");
+
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    facingMode: "user"
+                },
+                audio: false
+            });
+
+            // Compartir cámara entre módulos
+            for (const vista of Object.values(vistas)) {
+                vista.video.srcObject = stream;
+            }
+        }
+
+        await activarVista();
+
+        mostrarEstado("Cargando MediaPipe...");
+
+        // Importar MediaPipe
+        const {
+            FilesetResolver,
+            HandLandmarker
+        } = await import(
+            `${BASE_MEDIAPIPE}/vision_bundle.mjs`
+        );
+
+        // Cargar archivos WASM
+        const vision =
+            await FilesetResolver.forVisionTasks(
+                `${BASE_MEDIAPIPE}/wasm`
+            );
+
+        // Crear detector
+        if (!detector) {
+
+            detector = await HandLandmarker.createFromOptions(
+                vision,
+                {
+                    baseOptions: {
+                        modelAssetPath: MODELO,
+                        delegate: "CPU"
+                    },
+
+                    runningMode: "VIDEO",
+
+                    // Hasta dos manos
+                    numHands: 2,
+
+                    // Umbrales de detección
+                    minHandDetectionConfidence: 0.4,
+                    minHandPresenceConfidence: 0.4,
+                    minTrackingConfidence: 0.4
+                }
+            );
+        }
+
+        // Obtener conexiones de los dedos
+        conexiones = HandLandmarker.HAND_CONNECTIONS;
+
+        mostrarEstado("Buscando manos...");
+
+        console.log("MediaPipe cargado correctamente");
+
+        // Iniciar procesamiento una sola vez
+        if (animacion === null) {
+            animacion = requestAnimationFrame(procesarVideo);
+        }
+
+    } catch (error) {
+
+        console.error("ERROR AL INICIAR:", error);
+
+        mostrarEstado(
+            "Error: " + error.message
+        );
+
+    } finally {
+        iniciando = false;
+    }
+}
+
+// ========================================
+// DETECTAR AMBAS MANOS
+// ========================================
+
+function procesarVideo() {
+
+    animacion = requestAnimationFrame(procesarVideo);
+
+    if (!detector) return;
+
+    const modo = obtenerModoActivo();
+
+    if (!modo) return;
+
+    const vista = vistas[modo];
+    const video = vista.video;
+
+    if (
+        video.paused ||
+        video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA
+    ) {
+        return;
+    }
+
+    // Detectar cambio entre Traductor y Entrenar
+    if (ultimoVideo !== video) {
+
+        ultimoVideo = video;
+        ultimoTiempo = -1;
+    }
+
+    // No procesar el mismo fotograma dos veces
+    if (video.currentTime === ultimoTiempo) {
+        return;
+    }
+
+    ultimoTiempo = video.currentTime;
+
+    // Mantener timestamps crecientes
+    const timestamp = Math.max(
+        performance.now(),
+        ultimoTimestamp + 1
+    );
+
+    ultimoTimestamp = timestamp;
+
+    try {
+
+        // Ejecutar detección
+        const resultado = detector.detectForVideo(
+            video,
+            timestamp
+        );
+
+        // Obtener todas las manos
+        const manos = resultado.landmarks ?? [];
+
+        // Obtener identificación de las manos
+        const handedness =
+            resultado.handedness ??
+            resultado.handednesses ??
+            [];
+
+        // Ajustar canvas al video
+        if (
+            vista.canvas.width !== video.videoWidth ||
+            vista.canvas.height !== video.videoHeight
+        ) {
+
+            vista.canvas.width = video.videoWidth;
+            vista.canvas.height = video.videoHeight;
+        }
+
+        // Dibujar ambas manos
+        dibujarPuntos(vista.canvas, manos);
+
+        // Mostrar cantidad detectada
+        if (manos.length === 2) {
+
+            mostrarEstado("2 manos detectadas");
+
+        } else if (manos.length === 1) {
+
+            mostrarEstado("1 mano detectada");
+
+        } else {
+
+            mostrarEstado("Buscando manos...");
+        }
+
+        // Enviar las manos al dataset
+        window.dispatchEvent(
+            new CustomEvent("senalive:landmarks", {
+                detail: {
+                    landmarks: manos[0] ?? null,
+                    manos: manos,
+                    handedness: handedness,
+                    timestamp: timestamp,
+                    modo: modo
+                }
+            })
         );
 
     } catch (error) {
 
         console.error(
-            "Error al cargar el dataset:",
+            "ERROR DETECTANDO MANOS:",
             error
         );
 
-        return [];
-    }
+        mostrarEstado("Error en la detección");
 
+        detector = null;
+    }
 }
 
+// ========================================
+// DIBUJAR LOS PUNTOS DE AMBAS MANOS
+// ========================================
 
-// ====================================
-// GUARDAR DATOS
-// ====================================
+function dibujarPuntos(canvas, manos) {
 
-function guardarRegistros() {
+    const ctx = canvas.getContext("2d");
 
-    try {
+    if (!ctx) return;
 
-        localStorage.setItem(
-            CLAVE,
-            JSON.stringify(registros)
-        );
-
-        return true;
-
-    } catch (error) {
-
-        console.error(
-            "Error al guardar muestras:",
-            error
-        );
-
-        return false;
-    }
-
-}
-
-
-// ====================================
-// NORMALIZAR LOS 21 PUNTOS
-// ====================================
-
-function normalizarPuntos(puntos) {
-
-    if (
-        !Array.isArray(puntos) ||
-        puntos.length !== 21
-    ) {
-        return null;
-    }
-
-    // Punto 0: muñeca
-    const muneca = puntos[0];
-
-    // Calcular escala de la mano
-    const escala = Math.max(
-        ...puntos.map(punto =>
-            Math.hypot(
-                punto.x - muneca.x,
-                punto.y - muneca.y
-            )
-        )
+    // Limpiar dibujo anterior
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
     );
 
-    if (
-        !Number.isFinite(escala) ||
-        escala < 0.001
-    ) {
-        return null;
-    }
-
-    // Generar 63 características normalizadas
-    const resultado = puntos.flatMap(punto => [
-
-        (punto.x - muneca.x) / escala,
-
-        (punto.y - muneca.y) / escala,
-
-        (punto.z - muneca.z) / escala
-
-    ]);
-
-    if (!resultado.every(Number.isFinite)) {
-        return null;
-    }
-
-    return resultado;
-}
-
-
-// ====================================
-// ACTUALIZAR CONTADORES
-// ====================================
-
-function actualizarProgreso() {
-
-    contador.textContent =
-        `${capturadas} / ${meta}`;
-
-    progreso.style.width =
-        `${100 * capturadas / meta}%`;
-
-}
-
-
-// ====================================
-// MOSTRAR RESUMEN
-// ====================================
-
-function actualizarResumen() {
-
-    total.textContent = registros.length;
-
-    botonExportar.disabled =
-        registros.length === 0;
-
-    botonBorrar.disabled =
-        registros.length === 0;
-
-    const conteos = {};
-
-    // Contar muestras por letra
-    for (const muestra of registros) {
-
-        conteos[muestra.label] =
-            (conteos[muestra.label] || 0) + 1;
-
-    }
-
-    // Limpiar lista
-    desglose.replaceChildren();
-
-    // Mostrar cantidades
-    for (
-        const [letra, cantidad]
-        of Object.entries(conteos).sort()
-    ) {
-
-        const elemento =
-            document.createElement("li");
-
-        const nombre =
-            document.createElement("span");
-
-        const numero =
-            document.createElement("small");
-
-        nombre.textContent = letra;
-
-        numero.textContent =
-            `${cantidad} muestras`;
-
-        elemento.append(nombre, numero);
-
-        desglose.appendChild(elemento);
-    }
-
-}
-
-
-// ====================================
-// HABILITAR O DESHABILITAR CONTROLES
-// ====================================
-
-function activarFormulario(disponible) {
-
-    letraInput.disabled = !disponible;
-
-    personaInput.disabled = !disponible;
-
-    objetivoInput.disabled = !disponible;
-
-    botonInicio.disabled = !disponible;
-
-    botonStop.disabled = disponible;
-
-}
-
-
-// ====================================
-// DETENER CAPTURA
-// ====================================
-
-function detenerCaptura(mensaje) {
-
-    capturando = false;
-
-    activarFormulario(true);
-
-    if (mensaje) {
-        estado.textContent = mensaje;
-    }
-
-}
-
-
-// ====================================
-// INICIAR CAPTURA
-// ====================================
-
-botonInicio.addEventListener("click", () => {
-
-    const etiqueta = letraInput.value
-        .trim()
-        .toUpperCase()
-        .replace(/\s+/g, "_");
-
-    const participante = personaInput.value
-        .trim()
-        .toUpperCase();
-
-    const objetivo = Number(objetivoInput.value);
-
-    // Validar letra
-    if (!/^[A-ZÁÉÍÓÚÜÑ_]{1,24}$/u.test(etiqueta)) {
-
-        estado.textContent =
-            "Escribe una letra o seña válida.";
-
-        return;
-    }
-
-    // Validar participante
-    if (!/^[A-Z0-9_-]{1,20}$/.test(participante)) {
-
-        estado.textContent =
-            "Escribe un código como P01.";
-
-        return;
-    }
-
-    // Validar cantidad
-    if (
-        !Number.isInteger(objetivo) ||
-        objetivo < 10 ||
-        objetivo > 500
-    ) {
-
-        estado.textContent =
-            "Elige entre 10 y 500 muestras.";
-
-        return;
-    }
-
-    if (registros.length >= LIMITE_MUESTRAS) {
-
-        estado.textContent =
-            "Exporta tu dataset antes de continuar.";
-
-        return;
-    }
-
-    // Preparar sesión
-    etiquetaActual = etiqueta;
-    participanteActual = participante;
-
-    meta = objetivo;
-    capturadas = 0;
-    ultimoRegistro = 0;
-
-    sesionActual =
-        `${Date.now()}-${Math.random()
-            .toString(36).slice(2, 7)}`;
-
-    capturando = true;
-
-    activarFormulario(false);
-    actualizarProgreso();
-
-    estado.textContent =
-        `Capturando ${etiquetaActual}. ` +
-        "Mantén la seña frente a la cámara.";
-
-});
-
-
-// ====================================
-// BOTÓN DETENER
-// ====================================
-
-botonStop.addEventListener("click", () => {
-
-    detenerCaptura(
-        `Captura detenida: ${capturadas} muestras.`
-    );
-
-});
-
-
-// ====================================
-// RECIBIR PUNTOS DESDE CAMERA.JS
-// ====================================
-
-window.addEventListener(
-    "senalive:landmarks",
-    (evento) => {
-
-        if (!capturando) return;
-
-        // Verificar modo entrenamiento
-        const modoEntrenar =
-            document.getElementById("e");
-
-        if (!modoEntrenar.classList.contains("on")) {
-
-            detenerCaptura(
-                "Captura detenida al cambiar de módulo."
-            );
-
-            return;
-        }
-
-        // Obtener puntos detectados
-        const puntos = evento.detail?.landmarks;
-
-        if (!puntos) {
-
-            estado.textContent =
-                "Coloca tu mano frente a la cámara.";
-
-            return;
-        }
-
-        // Controlar frecuencia de captura
-        const ahora = performance.now();
-
-        if (
-            ahora - ultimoRegistro <
-            INTERVALO_MS
-        ) {
-            return;
-        }
-
-        // Normalizar las coordenadas
-        const features = normalizarPuntos(puntos);
-
-        if (!features) return;
-
-        ultimoRegistro = ahora;
-
-        // Crear una nueva muestra
-        const muestra = {
-
-            label: etiquetaActual,
-
-            person_id: participanteActual,
-
-            session_id: sesionActual,
-
-            recorded_at:
-                new Date().toISOString(),
-
-            features: features
-
-        };
-
-        // Guardar muestra
-        registros.push(muestra);
-
-        capturadas++;
-
-        const guardado = guardarRegistros();
-
-        if (!guardado) {
-
-            detenerCaptura(
-                "No se pudo guardar. Exporta el CSV."
-            );
-
-        }
-
-        // Actualizar interfaz
-        actualizarProgreso();
-        actualizarResumen();
-
-        if (!capturando) return;
-
-        estado.textContent =
-            `Grabando ${etiquetaActual}: ` +
-            `${capturadas} de ${meta}`;
-
-        // Finalizar sesión
-        if (
-            capturadas >= meta ||
-            registros.length >= LIMITE_MUESTRAS
-        ) {
-
-            detenerCaptura(
-                `¡Captura completada! ` +
-                `${capturadas} muestras de ${etiquetaActual}.`
-            );
-
-        }
-
-    }
-);
-
-
-// ====================================
-// EXPORTAR DATASET A CSV
-// ====================================
-
-botonExportar.addEventListener("click", () => {
-
-    if (registros.length === 0) return;
-
-    // Columnas principales
-    const columnas = [
-        "label",
-        "person_id",
-        "session_id",
-        "recorded_at"
+    // Colores para distinguir las manos
+    const colores = [
+        "#3ddba8", // Verde
+        "#00bfff"  // Azul
     ];
 
-    // Crear columnas de los 21 puntos
-    for (let i = 0; i < 21; i++) {
+    manos.forEach((puntos, indice) => {
 
-        columnas.push(
-            `x${i}`,
-            `y${i}`,
-            `z${i}`
-        );
+        const color = colores[indice % colores.length];
 
-    }
+        // Dibujar conexiones de los dedos
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
 
-    const filas = [columnas.join(",")];
+        for (const conexion of conexiones) {
 
-    // Crear una fila por muestra
-    for (const muestra of registros) {
+            const a = puntos[conexion.start];
+            const b = puntos[conexion.end];
 
-        const fila = [
+            if (!a || !b) continue;
 
-            muestra.label,
+            ctx.beginPath();
 
-            muestra.person_id,
+            ctx.moveTo(
+                a.x * canvas.width,
+                a.y * canvas.height
+            );
 
-            muestra.session_id,
+            ctx.lineTo(
+                b.x * canvas.width,
+                b.y * canvas.height
+            );
 
-            muestra.recorded_at,
-
-            ...muestra.features.map(
-                valor => Number(valor).toFixed(6)
-            )
-
-        ];
-
-        filas.push(fila.join(","));
-    }
-
-    // Construir archivo CSV
-    const csv = filas.join("\r\n");
-
-    const blob = new Blob(
-        ["\uFEFF", csv],
-        {
-            type: "text/csv;charset=utf-8"
+            ctx.stroke();
         }
-    );
 
-    const url = URL.createObjectURL(blob);
+        // Dibujar los 21 puntos
+        ctx.fillStyle = "white";
 
-    // Descargar archivo
-    const enlace = document.createElement("a");
+        for (const punto of puntos) {
 
-    enlace.href = url;
+            ctx.beginPath();
 
-    enlace.download =
-        `senalive_dataset_${new Date()
-            .toISOString().slice(0, 10)}.csv`;
+            ctx.arc(
+                punto.x * canvas.width,
+                punto.y * canvas.height,
+                5,
+                0,
+                Math.PI * 2
+            );
 
-    document.body.appendChild(enlace);
+            ctx.fill();
+        }
+    });
+}
 
-    enlace.click();
+// ========================================
+// CAMBIAR ENTRE MÓDULOS
+// ========================================
 
-    enlace.remove();
-
-    setTimeout(() => {
-        URL.revokeObjectURL(url);
-    }, 1000);
-
-    estado.textContent =
-        `CSV exportado con ${registros.length} muestras.`;
-
-});
-
-
-// ====================================
-// BORRAR DATASET
-// ====================================
-
-botonBorrar.addEventListener("click", () => {
-
-    const confirmar = confirm(
-        "¿Deseas borrar todas las muestras? " +
-        "Exporta el CSV antes de continuar."
-    );
-
-    if (!confirmar) return;
-
-    if (capturando) {
-        detenerCaptura();
-    }
-
-    registros = [];
-
-    guardarRegistros();
-
-    capturadas = 0;
-
-    actualizarResumen();
-    actualizarProgreso();
-
-    estado.textContent =
-        "Dataset borrado correctamente.";
-
-});
-
-
-// ====================================
-// DETENER AL CAMBIAR DE MÓDULO
-// ====================================
-
-document
-    .querySelectorAll("nav button[data-m]")
+document.querySelectorAll("nav button[data-m]")
     .forEach(boton => {
 
         boton.addEventListener("click", () => {
 
-            if (
-                capturando &&
-                boton.dataset.m !== "e"
-            ) {
+            // app.js debe actualizar primero la vista
+            setTimeout(() => {
 
-                detenerCaptura(
-                    "Captura detenida al salir de Entrenar."
-                );
+                activarVista().catch(error => {
 
-            }
+                    console.error(
+                        "Error cambiando de módulo:",
+                        error
+                    );
 
+                    mostrarEstado(
+                        "Error al activar la cámara"
+                    );
+                });
+
+            }, 0);
         });
-
     });
 
+// ========================================
+// LIBERAR RECURSOS
+// ========================================
 
-// ====================================
-// INICIALIZAR
-// ====================================
+window.addEventListener("pagehide", () => {
 
-actualizarProgreso();
+    if (animacion !== null) {
+        cancelAnimationFrame(animacion);
+        animacion = null;
+    }
 
-actualizarResumen();
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+
+    if (detector) {
+        detector.close();
+        detector = null;
+    }
+});
+
+// ========================================
+// INICIAR SEÑALIVE
+// ========================================
+
+iniciar();
