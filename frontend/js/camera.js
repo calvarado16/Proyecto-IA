@@ -1,16 +1,35 @@
 
-// ========================================
-// SEÑALIVE - CAMERA.JS
-// DETECCIÓN DE HASTA DOS MANOS
-// ========================================
+/* ==========================================
+   SEÑALIVE - CAMERA.JS
+   CÁMARA Y MEDIAPIPE
+   TRADUCTOR, APRENDER, JUEGO, ENTRENAR
+========================================== */
 
-// Elementos de las dos cámaras
+const ESPEJO_HORIZONTAL = false;
+
+// ==========================================
+// ELEMENTOS DE LAS CÁMARAS
+// ==========================================
+
 const vistas = {
     t: {
         video: document.getElementById("video"),
         canvas: document.getElementById("overlay"),
         estado: document.getElementById("cameraStatus")
     },
+
+    a: {
+        video: document.getElementById("learnVideo"),
+        canvas: document.getElementById("learnOverlay"),
+        estado: document.getElementById("learnCameraStatus")
+    },
+
+    j: {
+        video: document.getElementById("gameVideo"),
+        canvas: document.getElementById("gameOverlay"),
+        estado: document.getElementById("gameCameraStatus")
+    },
+
     e: {
         video: document.getElementById("trainVideo"),
         canvas: document.getElementById("trainOverlay"),
@@ -21,14 +40,16 @@ const vistas = {
 const estadoGeneral =
     document.getElementById("connectionStatus");
 
-// Utilizar la misma versión para JS y WASM
 const BASE_MEDIAPIPE =
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21";
 
-const MODELO =
+const MODELO_MANOS =
     "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 
-// Variables globales del módulo
+// ==========================================
+// VARIABLES
+// ==========================================
+
 let stream = null;
 let detector = null;
 let conexiones = [];
@@ -41,18 +62,16 @@ let animacion = null;
 let iniciando = false;
 let estadoAnterior = "";
 
-// ========================================
+// ==========================================
 // MOSTRAR ESTADO
-// ========================================
+// ==========================================
 
 function mostrarEstado(mensaje) {
-
     if (mensaje === estadoAnterior) return;
 
     estadoAnterior = mensaje;
 
     for (const vista of Object.values(vistas)) {
-
         if (vista.estado) {
             vista.estado.textContent = mensaje;
         }
@@ -63,16 +82,13 @@ function mostrarEstado(mensaje) {
     }
 }
 
-// ========================================
-// VERIFICAR ELEMENTOS HTML
-// ========================================
+// ==========================================
+// VERIFICAR ELEMENTOS
+// ==========================================
 
 function verificarElementos() {
-
     for (const [modo, vista] of Object.entries(vistas)) {
-
         for (const [nombre, elemento] of Object.entries(vista)) {
-
             if (!elemento) {
                 throw new Error(
                     `Falta ${nombre} en el módulo ${modo}`
@@ -82,54 +98,72 @@ function verificarElementos() {
     }
 }
 
-// ========================================
-// IDENTIFICAR MÓDULO ACTIVO
-// ========================================
+// ==========================================
+// IDENTIFICAR MODO ACTIVO
+// ==========================================
 
 function obtenerModoActivo() {
-
-    if (
-        document.getElementById("e")
-            ?.classList.contains("on")
-    ) {
+    if (document.getElementById("e")
+        ?.classList.contains("on")) {
         return "e";
     }
 
-    if (
-        document.getElementById("t")
-            ?.classList.contains("on")
-    ) {
+    if (document.getElementById("t")
+        ?.classList.contains("on")) {
         return "t";
+    }
+
+    if (document.getElementById("a")
+        ?.classList.contains("on")) {
+        return "a";
+    }
+
+    if (document.getElementById("j")
+        ?.classList.contains("on")) {
+        return "j";
     }
 
     return null;
 }
 
-// ========================================
-// ACTIVAR LA VISTA ACTUAL
-// ========================================
+// ==========================================
+// ORIENTACIÓN VISUAL
+// ==========================================
+
+function aplicarOrientacionVisual(vista) {
+    vista.video.style.transform = "none";
+    vista.canvas.style.transform = "none";
+
+    vista.video.style.transformOrigin = "center";
+    vista.canvas.style.transformOrigin = "center";
+}
+
+function obtenerFrameDeteccion(video) {
+    return video;
+}
+
+// ==========================================
+// ACTIVAR CÁMARA SEGÚN MÓDULO
+// ==========================================
 
 async function activarVista() {
-
     if (!stream) return;
 
     const modo = obtenerModoActivo();
 
-    // Pausar las vistas que no estén activas
     for (const [nombre, vista] of Object.entries(vistas)) {
-
         if (nombre !== modo) {
-
             vista.video.pause();
 
             const ctx = vista.canvas.getContext("2d");
 
-            ctx?.clearRect(
-                0,
-                0,
-                vista.canvas.width,
-                vista.canvas.height
-            );
+            if (ctx) {
+                ctx.clearRect(
+                    0, 0,
+                    vista.canvas.width,
+                    vista.canvas.height
+                );
+            }
         }
     }
 
@@ -137,34 +171,31 @@ async function activarVista() {
 
     const vista = vistas[modo];
 
+    aplicarOrientacionVisual(vista);
+
     if (vista.video.srcObject !== stream) {
         vista.video.srcObject = stream;
     }
 
-    // Reproducir video
     await vista.video.play();
 
-    // Ajustar tamaño del canvas
-    if (vista.video.videoWidth > 0) {
-
-        vista.canvas.width =
-            vista.video.videoWidth;
-
-        vista.canvas.height =
-            vista.video.videoHeight;
+    if (
+        vista.video.videoWidth > 0 &&
+        vista.video.videoHeight > 0
+    ) {
+        vista.canvas.width = vista.video.videoWidth;
+        vista.canvas.height = vista.video.videoHeight;
     }
 
-    // Reiniciar control de fotogramas
     ultimoVideo = null;
     ultimoTiempo = -1;
 }
 
-// ========================================
-// INICIAR CÁMARA Y MEDIAPIPE
-// ========================================
+// ==========================================
+// INICIAR MEDIAPIPE
+// ==========================================
 
 async function iniciar() {
-
     if (iniciando) return;
 
     if (stream && detector) {
@@ -175,32 +206,30 @@ async function iniciar() {
     iniciando = true;
 
     try {
-
         verificarElementos();
 
         if (!navigator.mediaDevices?.getUserMedia) {
             throw new Error(
-                "Abre la página desde localhost o HTTPS."
+                "Abre SeñaLive desde localhost o HTTPS"
             );
         }
 
-        // Solicitar cámara una sola vez
         if (!stream) {
-
             mostrarEstado("Solicitando cámara...");
 
-            stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    width: { ideal: 640 },
-                    height: { ideal: 480 },
-                    facingMode: "user"
-                },
-                audio: false
-            });
+            stream =
+                await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: "user"
+                    },
+                    audio: false
+                });
 
-            // Compartir cámara entre módulos
             for (const vista of Object.values(vistas)) {
                 vista.video.srcObject = stream;
+                aplicarOrientacionVisual(vista);
             }
         }
 
@@ -208,7 +237,6 @@ async function iniciar() {
 
         mostrarEstado("Cargando MediaPipe...");
 
-        // Importar MediaPipe
         const {
             FilesetResolver,
             HandLandmarker
@@ -216,67 +244,57 @@ async function iniciar() {
             `${BASE_MEDIAPIPE}/vision_bundle.mjs`
         );
 
-        // Cargar archivos WASM
         const vision =
             await FilesetResolver.forVisionTasks(
                 `${BASE_MEDIAPIPE}/wasm`
             );
 
-        // Crear detector
         if (!detector) {
+            detector =
+                await HandLandmarker.createFromOptions(
+                    vision,
+                    {
+                        baseOptions: {
+                            modelAssetPath: MODELO_MANOS,
+                            delegate: "CPU"
+                        },
 
-            detector = await HandLandmarker.createFromOptions(
-                vision,
-                {
-                    baseOptions: {
-                        modelAssetPath: MODELO,
-                        delegate: "CPU"
-                    },
+                        runningMode: "VIDEO",
+                        numHands: 2,
 
-                    runningMode: "VIDEO",
-
-                    // Hasta dos manos
-                    numHands: 2,
-
-                    // Umbrales de detección
-                    minHandDetectionConfidence: 0.4,
-                    minHandPresenceConfidence: 0.4,
-                    minTrackingConfidence: 0.4
-                }
-            );
+                        minHandDetectionConfidence: 0.4,
+                        minHandPresenceConfidence: 0.4,
+                        minTrackingConfidence: 0.4
+                    }
+                );
         }
 
-        // Obtener conexiones de los dedos
         conexiones = HandLandmarker.HAND_CONNECTIONS;
 
         mostrarEstado("Buscando manos...");
 
         console.log("MediaPipe cargado correctamente");
+        console.log("Cámara sin inversión horizontal");
 
-        // Iniciar procesamiento una sola vez
         if (animacion === null) {
             animacion = requestAnimationFrame(procesarVideo);
         }
 
     } catch (error) {
-
         console.error("ERROR AL INICIAR:", error);
 
-        mostrarEstado(
-            "Error: " + error.message
-        );
+        mostrarEstado("Error: " + error.message);
 
     } finally {
         iniciando = false;
     }
 }
 
-// ========================================
-// DETECTAR AMBAS MANOS
-// ========================================
+// ==========================================
+// PROCESAMIENTO DE VIDEO
+// ==========================================
 
 function procesarVideo() {
-
     animacion = requestAnimationFrame(procesarVideo);
 
     if (!detector) return;
@@ -290,26 +308,23 @@ function procesarVideo() {
 
     if (
         video.paused ||
-        video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA
+        video.readyState <
+            HTMLMediaElement.HAVE_CURRENT_DATA
     ) {
         return;
     }
 
-    // Detectar cambio entre Traductor y Entrenar
     if (ultimoVideo !== video) {
-
         ultimoVideo = video;
         ultimoTiempo = -1;
     }
 
-    // No procesar el mismo fotograma dos veces
     if (video.currentTime === ultimoTiempo) {
         return;
     }
 
     ultimoTiempo = video.currentTime;
 
-    // Mantener timestamps crecientes
     const timestamp = Math.max(
         performance.now(),
         ultimoTimestamp + 1
@@ -318,64 +333,60 @@ function procesarVideo() {
     ultimoTimestamp = timestamp;
 
     try {
+        const fuenteDeteccion =
+            obtenerFrameDeteccion(video);
 
-        // Ejecutar detección
         const resultado = detector.detectForVideo(
-            video,
+            fuenteDeteccion,
             timestamp
         );
 
-        // Obtener todas las manos
         const manos = resultado.landmarks ?? [];
 
-        // Obtener identificación de las manos
         const handedness =
             resultado.handedness ??
             resultado.handednesses ??
             [];
 
-        // Ajustar canvas al video
+        // Ajustar tamaño de canvas
         if (
             vista.canvas.width !== video.videoWidth ||
             vista.canvas.height !== video.videoHeight
         ) {
-
             vista.canvas.width = video.videoWidth;
             vista.canvas.height = video.videoHeight;
         }
 
-        // Dibujar ambas manos
         dibujarPuntos(vista.canvas, manos);
 
-        // Mostrar cantidad detectada
         if (manos.length === 2) {
-
             mostrarEstado("2 manos detectadas");
 
         } else if (manos.length === 1) {
-
             mostrarEstado("1 mano detectada");
 
         } else {
-
             mostrarEstado("Buscando manos...");
         }
 
-        // Enviar las manos al dataset
+        // Enviar landmarks a los módulos
         window.dispatchEvent(
-            new CustomEvent("senalive:landmarks", {
-                detail: {
-                    landmarks: manos[0] ?? null,
-                    manos: manos,
-                    handedness: handedness,
-                    timestamp: timestamp,
-                    modo: modo
+            new CustomEvent(
+                "senalive:landmarks",
+                {
+                    detail: {
+                        modo: modo,
+                        landmarks: manos[0] ?? null,
+                        manos: manos,
+                        handedness: handedness,
+                        espejo: ESPEJO_HORIZONTAL,
+                        timestamp: timestamp
+                    }
                 }
-            })
+            )
         );
 
     } catch (error) {
-
         console.error(
             "ERROR DETECTANDO MANOS:",
             error
@@ -383,44 +394,41 @@ function procesarVideo() {
 
         mostrarEstado("Error en la detección");
 
-        detector = null;
+        if (detector) {
+            detector.close();
+            detector = null;
+        }
     }
 }
 
-// ========================================
-// DIBUJAR LOS PUNTOS DE AMBAS MANOS
-// ========================================
+// ==========================================
+// DIBUJAR LOS 21 PUNTOS DE LA MANO
+// ==========================================
 
 function dibujarPuntos(canvas, manos) {
-
     const ctx = canvas.getContext("2d");
 
     if (!ctx) return;
 
-    // Limpiar dibujo anterior
     ctx.clearRect(
-        0,
-        0,
+        0, 0,
         canvas.width,
         canvas.height
     );
 
-    // Colores para distinguir las manos
     const colores = [
-        "#3ddba8", // Verde
-        "#00bfff"  // Azul
+        "#3ddba8",
+        "#00bfff"
     ];
 
     manos.forEach((puntos, indice) => {
-
         const color = colores[indice % colores.length];
 
-        // Dibujar conexiones de los dedos
         ctx.strokeStyle = color;
         ctx.lineWidth = 3;
 
+        // Conexiones de los dedos
         for (const conexion of conexiones) {
-
             const a = puntos[conexion.start];
             const b = puntos[conexion.end];
 
@@ -441,11 +449,10 @@ function dibujarPuntos(canvas, manos) {
             ctx.stroke();
         }
 
-        // Dibujar los 21 puntos
+        // Puntos de las manos
         ctx.fillStyle = "white";
 
         for (const punto of puntos) {
-
             ctx.beginPath();
 
             ctx.arc(
@@ -461,20 +468,15 @@ function dibujarPuntos(canvas, manos) {
     });
 }
 
-// ========================================
-// CAMBIAR ENTRE MÓDULOS
-// ========================================
+// ==========================================
+// NAVEGACIÓN ENTRE MÓDULOS
+// ==========================================
 
 document.querySelectorAll("nav button[data-m]")
     .forEach(boton => {
-
         boton.addEventListener("click", () => {
-
-            // app.js debe actualizar primero la vista
             setTimeout(() => {
-
                 activarVista().catch(error => {
-
                     console.error(
                         "Error cambiando de módulo:",
                         error
@@ -484,24 +486,24 @@ document.querySelectorAll("nav button[data-m]")
                         "Error al activar la cámara"
                     );
                 });
-
             }, 0);
         });
     });
 
-// ========================================
+// ==========================================
 // LIBERAR RECURSOS
-// ========================================
+// ==========================================
 
 window.addEventListener("pagehide", () => {
-
     if (animacion !== null) {
         cancelAnimationFrame(animacion);
         animacion = null;
     }
 
     if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach(
+            track => track.stop()
+        );
         stream = null;
     }
 
@@ -511,8 +513,8 @@ window.addEventListener("pagehide", () => {
     }
 });
 
-// ========================================
-// INICIAR SEÑALIVE
-// ========================================
+// ==========================================
+// INICIAR
+// ==========================================
 
 iniciar();

@@ -1,7 +1,12 @@
+/* ==========================================
+   SEÑALIVE - STYLES.CSS COMPLETO
+   TRADUCTOR, APRENDER, JUEGO,
+   DICCIONARIO, ENTRENAR E HISTORIAL
+========================================== */
 
-/* ==========================
-   VARIABLES Y COLORES
-========================== */
+/* ==========================================
+   1. VARIABLES Y COLORES
+========================================== */
 
 :root {
     --bg: #f3f6f4;
@@ -14,13 +19,10 @@
     --warn: #d99a00;
     --bad: #d64545;
     --cam: #0e1714;
-
-    box-sizing: border-box;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Modo oscuro */
+
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
         --bg: #0d1512;
@@ -33,11 +35,13 @@
     }
 }
 
-/* ==========================
-   ESTILOS GENERALES
-========================== */
+/* ==========================================
+   2. ESTILOS GENERALES
+========================================== */
 
-* {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
@@ -59,9 +63,9 @@ body {
     min-height: 100vh;
 }
 
-/* ==========================
-   MENÚ LATERAL
-========================== */
+/* ==========================================
+   3. MENÚ LATERAL
+========================================== */
 
 nav {
     background: var(--panel);
@@ -121,9 +125,9 @@ nav button:focus-visible,
     color: var(--ok);
 }
 
-/* ==========================
-   CONTENIDO PRINCIPAL
-========================== */
+/* ==========================================
+   4. CONTENIDO PRINCIPAL
+========================================== */
 
 main {
     padding: 20px;
@@ -155,9 +159,9 @@ h1 {
     color: var(--mute);
 }
 
-/* ==========================
-   MÓDULOS
-========================== */
+/* ==========================================
+   5. MÓDULOS
+========================================== */
 
 .mode {
     display: none;
@@ -174,15 +178,15 @@ h1 {
         minmax(0, 1fr);
 }
 
-/* ==========================
-   CÁMARA
-========================== */
+/* ==========================================
+   6. CÁMARA Y MEDIAPIPE
+========================================== */
 
 .cam {
     position: relative;
     background: var(--cam);
     border-radius: 14px;
-    aspect-ratio: 4/3;
+    aspect-ratio: 4 / 3;
     overflow: hidden;
     border: 4px solid transparent;
     transition: border-color .2s;
@@ -199,7 +203,7 @@ h1 {
     height: 100%;
 }
 
-/* Cámara real y puntos MediaPipe */
+/* Cámara real */
 
 .cam video,
 .cam canvas {
@@ -208,7 +212,6 @@ h1 {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    transform: scaleX(-1);
 }
 
 .cam canvas {
@@ -236,9 +239,9 @@ h1 {
     right: 10px;
 }
 
-/* ==========================
-   TARJETAS
-========================== */
+/* ==========================================
+   7. TARJETAS
+========================================== */
 
 .card {
     background: var(--panel);
@@ -270,6 +273,8 @@ h1 {
     margin: 8px 0 5px;
 }
 
+/* Barras de progreso generales */
+
 .bar {
     height: 10px;
     background: var(--line);
@@ -291,9 +296,9 @@ h1 {
     display: block;
 }
 
-/* ==========================
-   TEXTO TRADUCIDO
-========================== */
+/* ==========================================
+   8. TRADUCTOR
+========================================== */
 
 .out {
     font-size: 26px;
@@ -317,15 +322,9 @@ h1 {
     }
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .cur {
-        animation: none;
-    }
-}
-
-/* ==========================
-   BOTONES
-========================== */
+/* ==========================================
+   9. BOTONES GENERALES
+========================================== */
 
 .sug {
     display: flex;
@@ -374,9 +373,9 @@ h1 {
     font-weight: 600;
 }
 
-/* ==========================
-   APRENDIZAJE
-========================== */
+/* ==========================================
+   10. APRENDIZAJE - ESTILOS BASE
+========================================== */
 
 .target {
     display: flex;
@@ -399,9 +398,165 @@ h1 {
     padding: 8px;
 }
 
-/* ==========================
-   MINIJUEGO
-========================== */
+/* ==========================================
+   11. MODO APRENDIZAJE
+========================================== */
+
+#a .side,
+#a .side > .card {
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Letra e imagen */
+
+#a .target {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 18px;
+    min-width: 0;
+    margin: 16px 0 22px;
+}
+
+#a .target .big {
+    margin: 0;
+    flex: 0 0 auto;
+    font-size: clamp(68px, 8vw, 100px);
+    line-height: 1;
+}
+
+/* Cuadrado de referencia */
+
+#a .target .learn-ref,
+#a #learnReference {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 112px;
+    width: 112px;
+    height: 112px;
+
+    min-width: 112px;
+    max-width: 112px;
+    min-height: 112px;
+    max-height: 112px;
+
+    padding: 5px;
+    overflow: hidden;
+
+    border-radius: 12px;
+    border: 1px dashed var(--line);
+    background: var(--bg);
+}
+
+/* Imagen ASL */
+
+#a #learnReferenceImage {
+    position: static !important;
+    display: block;
+
+    width: 100% !important;
+    height: 100% !important;
+
+    min-width: 0 !important;
+    min-height: 0 !important;
+
+    max-width: 100% !important;
+    max-height: 100% !important;
+
+    object-fit: contain !important;
+    object-position: center;
+    transform: none !important;
+}
+
+#a #learnReferenceImage[hidden],
+#a #learnReferenceText[hidden] {
+    display: none !important;
+}
+
+#a .target .learn-ref span {
+    max-width: 100%;
+    font-size: 11px;
+    line-height: 1.35;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+/* Instrucciones de aprendizaje */
+
+#a .learn-help {
+    margin: 10px 0 12px;
+    font-size: 13px;
+    color: var(--ink);
+    text-align: center;
+}
+
+#a .learn-feedback {
+    min-height: 38px;
+    margin: 0 0 12px;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+/* Barra verde de avance */
+
+#a .bar {
+    width: 100%;
+    height: 12px;
+    margin: 0;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--line);
+    overflow: hidden;
+}
+
+#a .bar > #learnProgressFill {
+    display: block;
+    width: 0;
+    height: 100%;
+    background: var(--accent);
+    border-radius: inherit;
+    transition: width 250ms ease;
+}
+
+/* Botones de aprendizaje */
+
+#a .learn-actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+    padding-bottom: 4px;
+}
+
+#a .learn-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    max-width: 100%;
+    text-align: center;
+    white-space: normal;
+}
+
+#a .scores {
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ==========================================
+   12. JUEGO - ESTILOS GENERALES
+========================================== */
 
 .word {
     display: flex;
@@ -446,9 +601,9 @@ h1 {
     color: var(--mute);
 }
 
-/* ==========================
-   DICCIONARIO
-========================== */
+/* ==========================================
+   13. DICCIONARIO
+========================================== */
 
 .grid {
     display: grid;
@@ -477,9 +632,9 @@ h1 {
     border-color: var(--accent);
 }
 
-/* ==========================
-   ENTRENAMIENTO
-========================== */
+/* ==========================================
+   14. ENTRENAMIENTO
+========================================== */
 
 input {
     width: 100%;
@@ -496,9 +651,38 @@ input {
     margin-top: 12px;
 }
 
-/* ==========================
-   HISTORIAL
-========================== */
+.section-title {
+    font-size: 18px;
+    margin: 0;
+}
+
+#e label {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 5px;
+    color: var(--mute);
+}
+
+.capture-status,
+.hint {
+    color: var(--mute);
+    font-size: 13px;
+}
+
+.dataset-summary {
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+}
+
+.bar i.capture-progress {
+    width: 0;
+    background: var(--ok);
+    transition: width .15s ease;
+}
+
+/* ==========================================
+   15. HISTORIAL
+========================================== */
 
 ul {
     list-style: none;
@@ -519,9 +703,9 @@ li small {
     color: var(--mute);
 }
 
-/* ==========================
-   CLASES AUXILIARES
-========================== */
+/* ==========================================
+   16. CLASES AUXILIARES
+========================================== */
 
 .lbl-center {
     justify-content: center;
@@ -569,12 +753,16 @@ li small {
     width: 0;
 }
 
-/* ==========================
-   DISEÑO RESPONSIVO
-========================== */
+button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+/* ==========================================
+   17. DISEÑO RESPONSIVO GENERAL
+========================================== */
 
 @media (max-width: 820px) {
-
     .app {
         grid-template-columns: 1fr;
     }
@@ -604,57 +792,516 @@ li small {
     }
 }
 
-/* Cámara real */
-.cam video,
-.cam canvas {
+/* Aprendizaje en pantallas pequeñas */
+
+@media (max-width: 480px) {
+    #a .target {
+        gap: 12px;
+    }
+
+    #a .target .big {
+        font-size: 68px;
+    }
+
+    #a .target .learn-ref,
+    #a #learnReference {
+        flex-basis: 102px;
+        width: 102px;
+        height: 102px;
+        min-width: 102px;
+        max-width: 102px;
+        min-height: 102px;
+        max-height: 102px;
+    }
+
+    #a .learn-actions {
+        margin-top: 18px;
+    }
+}
+
+/* ==========================================
+   18. JUEGO - DISEÑO CORREGIDO
+========================================== */
+
+/* Distribución del juego */
+
+#j.on {
+    grid-template-columns:
+        minmax(0, 1.6fr)
+        minmax(0, 1fr);
+
+    align-items: start;
+}
+
+#j .game-side,
+#j .game-side > .card {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Panel del juego */
+
+#j .game-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 18px;
+    overflow: hidden;
+}
+
+/* Número de palabra */
+
+#j #gameRound {
+    display: block;
+    margin: 0 0 10px;
+    text-align: center;
+    color: var(--mute);
+    font-size: 13px;
+}
+
+/* Título */
+
+#j .game-heading {
+    margin: 0 0 16px;
+    color: var(--ink);
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+}
+
+/* Letras de la palabra */
+
+#j #gameWord {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 0;
+    margin: 0 0 16px;
+}
+
+/* Cuadrados de las letras */
+
+#j #gameWord span {
+    display: grid;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 50px;
+    place-items: center;
+    font-size: 24px;
+    line-height: 1;
+    border-radius: 9px;
+}
+
+/* Instrucciones del juego */
+
+#j .game-instruction {
+    margin: 0 0 8px;
+    color: var(--mute);
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+/* Mensaje de detección */
+
+#j #gameFeedback {
+    min-height: 38px;
+    margin: 0 0 14px;
+    font-size: 13px;
+    line-height: 1.45;
+    font-weight: 600;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+/* Etiqueta del cronómetro */
+
+#j .game-panel > .lbl:not(#gameRound) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 8px;
+}
+
+#j #gameTime {
+    color: var(--ink);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================
+   19. BARRA AMARILLA DEL JUEGO
+========================================== */
+
+#j .game-timer {
+    position: relative;
+    display: block;
+
+    flex: 0 0 12px;
+
+    width: 100%;
+    height: 12px;
+
+    margin: 0 0 20px;
+    padding: 0;
+
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--line);
+}
+
+/* Relleno del tiempo restante */
+
+#j .game-timer > #gameTimerFill {
+    display: block;
+    width: 100%;
+    height: 100%;
+
+    background: var(--warn) !important;
+    border-radius: inherit;
+
+    transition: width .1s linear;
+}
+
+/* ==========================================
+   20. BOTONES DEL JUEGO
+========================================== */
+
+#j .game-actions {
+    position: static;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+}
+
+#j .game-actions .btn {
+    position: static;
+
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+
+    min-height: 42px;
+    max-width: 100%;
+
+    padding: 9px 16px;
+
+    text-align: center;
+    white-space: normal;
+}
+
+/* ==========================================
+   21. PUNTUACIONES DEL JUEGO
+========================================== */
+
+#j .game-scores {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-around;
+    gap: 12px;
+}
+
+#j .game-scores > div {
+    min-width: 72px;
+}
+
+/* Confianza sobre la cámara */
+
+#j #gameConfidence {
+    max-width: 54%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ==========================================
+   22. JUEGO RESPONSIVO
+========================================== */
+
+@media (max-width: 1000px) {
+    #j.on {
+        grid-template-columns: 1fr;
+    }
+
+    #j .game-panel {
+        padding: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    #j #gameWord {
+        gap: 5px;
+    }
+
+    #j #gameWord span {
+        flex-basis: 36px;
+        width: 36px;
+        height: 46px;
+        font-size: 21px;
+    }
+
+    #j .game-actions .btn {
+        font-size: 13px;
+    }
+}
+
+/* ==========================================
+   23. ACCESIBILIDAD
+========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .cur {
+        animation: none;
+    }
+
+    #a .bar > #learnProgressFill,
+    #j .game-timer > #gameTimerFill {
+        transition: none;
+    }
+}
+
+/* ==========================================
+   24. DICCIONARIO VISUAL — DISTRIBUCIÓN CORREGIDA
+   Compatible con el diccionario.js que agrega estilos
+   dinámicamente. Se usan selectores específicos para
+   evitar que aquellos estilos anulen este diseño.
+========================================== */
+
+#d.mode.on {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(340px, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+#d.mode.on > .card,
+#d.mode.on > .side,
+#d.mode.on > .side > .card {
+    min-width: 0;
+    max-width: 100%;
+}
+
+#d.mode.on > .card {
+    padding: 20px;
+    min-height: 280px;
+}
+
+/* Evitar que las letras queden apretadas */
+#d.mode.on #keys {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 10px;
+    width: 100%;
+}
+
+#d.mode.on #keys .key {
+    min-width: 0;
+    width: 100%;
+    min-height: 50px;
+    font-size: 19px;
+    text-align: center;
+}
+
+#d.mode.on .dictionary-help {
+    margin: 0 0 18px;
+    line-height: 1.55;
+}
+
+/* Dos tarjetas separadas: referencia arriba, cámara abajo */
+#d.mode.on > .side {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    align-self: start;
+}
+
+#d.mode.on > .side > .card {
+    padding: 20px;
+    overflow: hidden;
+}
+
+#d.mode.on > .side > .card .lbl {
+    justify-content: center;
+    align-items: baseline;
+    gap: 6px;
+    margin: 0 0 14px;
+    line-height: 1.45;
+    text-align: center;
+}
+
+/* Fotografía en su propio recuadro sin expandirse */
+#d.mode.on .side > .card .dictionary-reference {
+    display: grid;
+    place-items: center;
+    position: relative;
+    width: 100%;
+    height: 172px;
+    min-height: 172px;
+    max-height: 172px;
+    padding: 10px;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px dashed var(--line);
+    background: var(--bg);
+}
+
+#d.mode.on .side > .card .dictionary-reference img {
+    display: block;
+    position: static !important;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 150px;
+    min-width: 0;
+    min-height: 0;
+    object-fit: contain;
+    object-position: center;
+    margin: auto;
+    transform: none !important;
+}
+
+#d.mode.on .dictionary-reference img[hidden],
+#d.mode.on .dictionary-reference p[hidden] {
+    display: none !important;
+}
+
+#d.mode.on .side > .card .dictionary-reference p {
+    margin: 0;
+    padding: 8px;
+    max-width: 100%;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+    text-align: center;
+}
+
+/* Cámara dentro de la tarjeta; no se monta sobre los textos */
+#d.mode.on .side > .card .dictionary-camera {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    aspect-ratio: 4 / 3;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--cam);
+}
+
+#d.mode.on .side > .card .dictionary-camera video,
+#d.mode.on .side > .card .dictionary-camera canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    transform: scaleX(-1);
 }
 
-.cam canvas {
-    pointer-events: none;
-    z-index: 1;
-}
-
-.cam .tag {
-    z-index: 2;
-}
-
-/* Controles de entrenamiento */
-.section-title {
-    font-size: 18px;
-    margin: 0;
-}
-
-#e label {
+#d.mode.on .side > .card #dictionaryFeedback {
     display: block;
+    margin: 16px 0 12px;
+    min-height: 42px;
+    line-height: 1.5;
     font-size: 13px;
-    margin-bottom: 5px;
-    color: var(--mute);
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
-.capture-status,
-.hint {
-    color: var(--mute);
-    font-size: 13px;
+#d.mode.on .side > .card .dictionary-meter {
+    display: block;
+    position: relative;
+    height: 12px;
+    width: 100%;
+    margin: 0;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--line);
 }
 
-.dataset-summary {
-    border-top: 1px solid var(--line);
-    padding-top: 12px;
-}
-
-.bar i.capture-progress {
+#d.mode.on .side > .card #dictionaryProgressFill {
+    display: block;
+    height: 100%;
     width: 0;
-    background: var(--ok);
-    transition: width .15s ease;
+    border-radius: inherit;
+    background: var(--accent);
 }
 
-button:disabled {
-    opacity: .5;
-    cursor: not-allowed;
+#d.mode.on .side > .card .dictionary-hint {
+    margin: 12px 0 0;
+    line-height: 1.45;
+    text-align: center;
+}
+
+#d.mode.on .side > .card .dictionary-controls {
+    display: flex;
+    justify-content: center;
+    margin: 16px 0 0;
+    padding: 0;
+}
+
+#d.mode.on .side > .card .dictionary-controls .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    text-align: center;
+    max-width: 100%;
+    white-space: normal;
+}
+
+/* Tablet: las tarjetas usan todo el ancho disponible */
+@media (max-width: 1050px) {
+    #d.mode.on {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+    }
+
+    #d.mode.on > .card { min-height: 0; }
+
+    #d.mode.on > .side {
+        width: 100%;
+        max-width: 760px;
+        margin-inline: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    #d.mode.on { gap: 14px; }
+
+    #d.mode.on > .card,
+    #d.mode.on > .side > .card { padding: 14px; }
+
+    #d.mode.on #keys {
+        grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+        gap: 7px;
+    }
+
+    #d.mode.on #keys .key {
+        min-height: 43px;
+        font-size: 17px;
+    }
+
+    #d.mode.on .side > .card .dictionary-reference {
+        height: 156px;
+        min-height: 156px;
+        max-height: 156px;
+    }
+
+    #d.mode.on .side > .card .dictionary-reference img {
+        max-height: 134px;
+    }
 }

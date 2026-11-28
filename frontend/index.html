@@ -4,21 +4,20 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>SeñaLive - Traductor de señas</title>
 
-    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="./css/styles.css?v=60">
 </head>
 
 <body>
 
 <div class="app">
 
-    <!-- ====================================
+    <!-- ========================================
          MENÚ LATERAL
-    ===================================== -->
+    ======================================== -->
 
     <nav aria-label="Modos">
 
@@ -26,35 +25,32 @@
             Seña<span>Live</span>
         </div>
 
-        <button class="on" data-m="t">
+        <button class="on" data-m="t" type="button">
             Traductor
         </button>
 
-        <button data-m="a">
+        <button data-m="a" type="button">
             Aprender
         </button>
 
-        <button data-m="j">
+        <button data-m="j" type="button">
             Juego
         </button>
 
-        <button data-m="d">
+        <button data-m="d" type="button">
             Diccionario
         </button>
 
-        <button data-m="e">
+        <button data-m="e" type="button">
             Entrenar
         </button>
 
-        <button data-m="h">
+        <button data-m="h" type="button">
             Historial
         </button>
 
-        <!-- ESTADO DE CONEXIÓN -->
         <div class="stat">
-
             <b>●</b>
-
             <span id="connectionStatus">
                 Cámara pendiente
             </span>
@@ -62,40 +58,37 @@
             <br>
 
             <span id="tensorflowStatus">
-                TensorFlow.js · 24 letras
+                TensorFlow.js · 26 letras + 10 palabras ASL
             </span>
-
         </div>
 
     </nav>
 
 
-    <!-- ====================================
+    <!-- ========================================
          CONTENIDO PRINCIPAL
-    ===================================== -->
+    ======================================== -->
 
     <main>
 
         <header>
 
-            <h1 id="ttl">
-                Traductor
-            </h1>
+            <h1 id="ttl">Traductor</h1>
 
             <span class="pill">
-                ASL · 24 letras estáticas
+                ASL · 24 estáticas + J y Z
             </span>
 
         </header>
 
 
-        <!-- ====================================
+        <!-- ========================================
              MÓDULO 1: TRADUCTOR
-        ===================================== -->
+        ======================================== -->
 
         <section class="mode row on" id="t">
 
-            <!-- CÁMARA PRINCIPAL -->
+            <!-- CÁMARA -->
             <div class="cam" id="cam1">
 
                 <video
@@ -105,15 +98,22 @@
                     muted>
                 </video>
 
+                <!-- LANDMARKS DE MEDIAPIPE -->
                 <canvas id="overlay"></canvas>
 
                 <span
                     class="tag"
                     id="cameraStatus">
-
                     Iniciando cámara...
-
                 </span>
+
+                <!--
+                    movimientos.js agrega automáticamente
+                    el punto amarillo de seguimiento.
+
+                    No necesita botones para reconocer
+                    J ni Z.
+                -->
 
             </div>
 
@@ -128,33 +128,22 @@
                         class="big"
                         id="prediction"
                         aria-live="polite">
-
                         —
-
                     </div>
-
 
                     <!-- CONFIANZA -->
                     <div class="lbl">
 
-                        <span>
-                            Confianza
-                        </span>
+                        <span>Confianza</span>
 
-                        <b id="confidence">
-                            —
-                        </b>
+                        <b id="confidence">—</b>
 
                     </div>
-
 
                     <!-- BARRA DE CONFIANZA -->
                     <div class="bar">
-
                         <i class="confidence-fill"></i>
-
                     </div>
-
 
                     <!-- INDICADOR CIRCULAR -->
                     <svg
@@ -167,7 +156,8 @@
                             r="15"
                             fill="none"
                             stroke="var(--line)"
-                            stroke-width="3"/>
+                            stroke-width="3"
+                        />
 
                         <circle
                             cx="18"
@@ -179,19 +169,17 @@
                             stroke-dasharray="94"
                             stroke-dashoffset="94"
                             stroke-linecap="round"
-                            transform="rotate(-90 18 18)"/>
+                            transform="rotate(-90 18 18)"
+                        />
 
                     </svg>
 
-
-                    <!-- ESTADO DE TENSORFLOW -->
+                    <!-- ESTADO DEL MODELO -->
                     <div
                         class="lbl lbl-center"
                         id="modelStatus"
                         role="status">
-
-                        Cargando modelo TensorFlow.js...
-
+                        Cargando modelos TensorFlow.js...
                     </div>
 
                 </div>
@@ -203,60 +191,38 @@
             <div class="card full-span">
 
                 <div class="out" id="out">
-
                     <span class="cur"></span>
-
                 </div>
-
 
                 <!-- SUGERENCIAS -->
                 <div class="sug">
 
-                    <span class="chip">
-                        MUNDO
-                    </span>
-
-                    <span class="chip">
-                        MUNDIAL
-                    </span>
-
-                    <span class="chip">
-                        MUNICIPIO
-                    </span>
+                    <span class="chip">MUNDO</span>
+                    <span class="chip">MUNDIAL</span>
+                    <span class="chip">MUNICIPIO</span>
 
                 </div>
 
-
-                <!-- CONTROLES DEL TRADUCTOR -->
+                <!-- CONTROLES -->
                 <div class="btns">
 
-                    <button
-                        class="btn"
-                        type="button">
+                    <button class="btn" type="button">
                         Espacio
                     </button>
 
-                    <button
-                        class="btn"
-                        type="button">
+                    <button class="btn" type="button">
                         Borrar
                     </button>
 
-                    <button
-                        class="btn"
-                        type="button">
+                    <button class="btn" type="button">
                         Limpiar
                     </button>
 
-                    <button
-                        class="btn p"
-                        type="button">
+                    <button class="btn p" type="button">
                         Leer en voz alta
                     </button>
 
-                    <button
-                        class="btn"
-                        type="button">
+                    <button class="btn" type="button">
                         Guardar en historial
                     </button>
 
@@ -267,186 +233,116 @@
         </section>
 
 
-        <!-- ====================================
+        <!-- ========================================
              MÓDULO 2: APRENDER
-        ===================================== -->
+        ======================================== -->
 
         <section class="mode row" id="a">
 
-            <div class="cam ok">
-
-                <span class="tag">
-                    ¡Correcto!
-                </span>
-
-                <span class="tag fps">
-                    28 FPS
-                </span>
-
-                <svg
-                    class="hand"
-                    viewBox="0 0 400 300">
-                </svg>
-
+            <div class="cam" id="learnCamera">
+                <video id="learnVideo" autoplay playsinline muted></video>
+                <canvas id="learnOverlay"></canvas>
+                <span class="tag" id="learnCameraStatus">Iniciando cámara...</span>
+                <span class="tag fps" id="learnConfidence">Esperando modelo...</span>
             </div>
-
 
             <div class="side">
-
-                <!-- LETRA DE REFERENCIA -->
                 <div class="card">
-
-                    <div class="lbl lbl-center">
-                        Haz la letra
-                    </div>
-
+                    <div class="lbl lbl-center">Haz la letra</div>
                     <div class="target">
-
-                        <div class="big no-margin">
-                            L
+                        <div class="big no-margin" id="learnTarget">—</div>
+                        <div class="ref learn-ref" id="learnReference">
+                            <img id="learnReferenceImage" alt="Seña ASL de referencia" hidden>
+                            <span id="learnReferenceText">Referencia visual pendiente</span>
                         </div>
-
-                        <div class="ref">
-                            Imagen de referencia
-                        </div>
-
                     </div>
-
+                    <p class="learn-help" id="learnInstruction">
+                        Coloca una mano frente a la cámara y realiza la letra indicada.
+                    </p>
+                    <p class="learn-feedback" id="learnFeedback" role="status" aria-live="polite">
+                        Esperando detección de tu mano...
+                    </p>
+                    <div class="bar"><i id="learnProgressFill" class="learn-progress-fill"></i></div>
+                    <div class="learn-actions">
+                        <button class="btn p" id="learnRestart" type="button">Reiniciar práctica</button>
+                        <button class="btn" id="learnSkip" type="button">Saltar letra</button>
+                    </div>
                 </div>
 
-
-                <!-- PUNTUACIÓN -->
                 <div class="card scores">
-
-                    <div>
-                        <b>120</b>
-                        <small>Puntos</small>
-                    </div>
-
-                    <div>
-                        <b>5</b>
-                        <small>Racha</small>
-                    </div>
-
-                    <div>
-                        <b>8/10</b>
-                        <small>Letras</small>
-                    </div>
-
+                    <div><b id="learnPoints">0</b><small>Puntos</small></div>
+                    <div><b id="learnStreak">0</b><small>Racha</small></div>
+                    <div><b id="learnCompleted">0/10</b><small>Letras</small></div>
                 </div>
-
             </div>
-
         </section>
 
 
-        <!-- ====================================
-             MÓDULO 3: JUEGO
-        ===================================== -->
+        <!-- ========================================
+             MÓDULO 3: JUEGO REAL CON CÁMARA
+        ======================================== -->
 
         <section class="mode row" id="j">
 
-            <div class="cam">
-
-                <span class="tag">
-                    Deletrea la palabra
-                </span>
-
-                <span class="tag fps">
-                    28 FPS
-                </span>
-
-                <svg
-                    class="hand"
-                    viewBox="0 0 400 300">
-                </svg>
-
+            <!-- La cámara comparte el detector de MediaPipe -->
+            <div class="cam" id="gameCamera">
+                <video id="gameVideo" autoplay playsinline muted></video>
+                <canvas id="gameOverlay"></canvas>
+                <span class="tag" id="gameCameraStatus">Iniciando cámara...</span>
+                <span class="tag fps" id="gameConfidence">Sin mano</span>
             </div>
 
-
-            <div class="side">
-
-                <!-- PALABRA DEL JUEGO -->
-                <div class="card">
-
-                    <div class="lbl lbl-center">
-                        Palabra 3 de 5
-                    </div>
-
-                    <div class="word">
-
-                        <span class="d">S</span>
-                        <span class="d">O</span>
-                        <span class="c">L</span>
-                        <span>E</span>
-
-                    </div>
-
-
-                    <!-- TEMPORIZADOR -->
+            <div class="side game-side">
+                <div class="card game-panel">
+                    <div class="lbl lbl-center" id="gameRound">Palabra 1 de 5</div>
+                    <h2 class="game-heading">Deletrea la palabra</h2>
+                    <div class="word game-word" id="gameWord" aria-label="Palabra que debes deletrear"></div>
+                    <p class="game-instruction">Haz cada letra en orden frente a la cámara.</p>
+                    <p class="game-feedback" id="gameFeedback" role="status" aria-live="polite">
+                        Esperando que el modelo reconozca tu mano...
+                    </p>
                     <div class="lbl">
-
-                        <span>Tiempo</span>
-
-                        <b>00:18</b>
-
+                        <span>Tiempo restante</span>
+                        <b id="gameTime">00:45</b>
                     </div>
-
-                    <div class="bar">
-
-                        <i class="timer-fill"></i>
-
+                    <div class="bar game-timer" aria-label="Tiempo restante">
+                        <i id="gameTimerFill"></i>
                     </div>
-
+                    <div class="game-actions">
+                        <button class="btn p" id="gameRestart" type="button">Reiniciar partida</button>
+                        <button class="btn" id="gameSkip" type="button">Saltar palabra</button>
+                    </div>
                 </div>
 
-
-                <!-- PUNTOS -->
-                <div class="card scores">
-
-                    <div>
-                        <b>340</b>
-                        <small>Puntos</small>
-                    </div>
-
-                    <div>
-                        <b>x3</b>
-                        <small>Racha</small>
-                    </div>
-
+                <div class="card scores game-scores">
+                    <div><b id="gamePoints">0</b><small>Puntos</small></div>
+                    <div><b id="gameStreak">x0</b><small>Racha</small></div>
+                    <div><b id="gameCompleted">0/5</b><small>Completadas</small></div>
                 </div>
-
             </div>
 
         </section>
 
 
-        <!-- ====================================
+        <!-- ========================================
              MÓDULO 4: DICCIONARIO
-        ===================================== -->
+        ======================================== -->
 
         <section class="mode row" id="d">
 
-            <!-- LISTADO DE LETRAS -->
             <div class="card">
 
-                <div
-                    class="grid"
-                    id="keys">
-                </div>
+                <div class="grid" id="keys"></div>
 
             </div>
 
-
             <div class="side">
 
-                <!-- REFERENCIA -->
                 <div class="card">
 
                     <div class="lbl lbl-center">
 
                         Seña de referencia:
-
                         <b id="kl">A</b>
 
                     </div>
@@ -457,8 +353,6 @@
 
                 </div>
 
-
-                <!-- CÁMARA DE REFERENCIA -->
                 <div class="card">
 
                     <div class="lbl lbl-center">
@@ -481,16 +375,14 @@
         </section>
 
 
-        <!-- ====================================
-             MÓDULO 5: ENTRENAMIENTO
-        ===================================== -->
+        <!-- ========================================
+             MÓDULO 5: ENTRENAR
+        ======================================== -->
 
         <section class="mode row" id="e">
 
             <!-- CÁMARA DE ENTRENAMIENTO -->
-            <div
-                class="cam"
-                id="trainCamera">
+            <div class="cam" id="trainCamera">
 
                 <video
                     id="trainVideo"
@@ -504,9 +396,7 @@
                 <span
                     class="tag"
                     id="trainCameraStatus">
-
                     Esperando cámara...
-
                 </span>
 
             </div>
@@ -519,8 +409,7 @@
                     Recolectar muestras
                 </h2>
 
-
-                <!-- ETIQUETA DE SEÑA -->
+                <!-- LETRA -->
                 <div>
 
                     <label for="captureLabel">
@@ -531,10 +420,10 @@
                         type="text"
                         id="captureLabel"
                         value="A"
-                        maxlength="24">
+                        maxlength="24"
+                    >
 
                 </div>
-
 
                 <!-- PARTICIPANTE -->
                 <div>
@@ -547,10 +436,10 @@
                         type="text"
                         id="personId"
                         value="P01"
-                        maxlength="20">
+                        maxlength="20"
+                    >
 
                 </div>
-
 
                 <!-- CANTIDAD DE MUESTRAS -->
                 <div>
@@ -564,12 +453,12 @@
                         id="captureTarget"
                         value="50"
                         min="10"
-                        max="500">
+                        max="500"
+                    >
 
                 </div>
 
-
-                <!-- CONTADOR -->
+                <!-- PROGRESO -->
                 <div>
 
                     <div class="lbl">
@@ -595,17 +484,14 @@
 
                 </div>
 
-
-                <!-- CONTROLES DE CAPTURA -->
+                <!-- BOTONES DE CAPTURA -->
                 <div class="btns">
 
                     <button
                         class="btn p"
                         id="startCapture"
                         type="button">
-
                         Iniciar captura
-
                     </button>
 
                     <button
@@ -613,44 +499,32 @@
                         id="stopCapture"
                         type="button"
                         disabled>
-
                         Detener
-
                     </button>
 
                 </div>
 
-
-                <!-- MENSAJE DE CAPTURA -->
+                <!-- ESTADO DE CAPTURA -->
                 <p
                     id="captureStatus"
                     class="capture-status"
                     role="status">
-
-                    Coloca tus manos frente a la cámara.
-
+                    Coloca una mano frente a la cámara.
                 </p>
 
-
-                <!-- RESUMEN DEL DATASET -->
+                <!-- RESUMEN -->
                 <div class="dataset-summary">
 
                     <b>
-
                         Total de muestras:
-
-                        <span id="datasetTotal">
-                            0
-                        </span>
-
+                        <span id="datasetTotal">0</span>
                     </b>
 
                     <ul id="datasetCounts"></ul>
 
                 </div>
 
-
-                <!-- EXPORTAR DATOS -->
+                <!-- EXPORTACIÓN -->
                 <div class="btns">
 
                     <button
@@ -658,9 +532,7 @@
                         id="downloadDataset"
                         type="button"
                         disabled>
-
                         Exportar CSV
-
                     </button>
 
                     <button
@@ -668,51 +540,48 @@
                         id="clearDataset"
                         type="button"
                         disabled>
-
                         Borrar dataset
-
                     </button>
 
                 </div>
 
-
                 <!-- INFORMACIÓN -->
                 <p class="hint">
 
-                    Se guardarán 126 características
+                    Se guardarán 63 características
                     por muestra, correspondientes
-                    a la mano izquierda y derecha.
+                    a los 21 puntos de una mano.
 
-                    El clasificador actual de letras
-                    utiliza 63 características de
-                    una sola mano.
+                    Estas características utilizan
+                    la normalización del modelo
+                    entrenado en Google Colab.
 
                 </p>
 
-
-                <!-- FUTURO REENTRENAMIENTO -->
                 <button
                     class="btn"
                     type="button"
                     disabled>
-
-                    Reentrenar TensorFlow
-                    (próximamente)
-
+                    Reentrenar TensorFlow (próximamente)
                 </button>
+
+                <!--
+                    dataset-movimientos.js agregará
+                    debajo de este contenido la
+                    sección para grabar secuencias
+                    de J, Z y OTRO.
+                -->
 
             </div>
 
         </section>
 
 
-        <!-- ====================================
+        <!-- ========================================
              MÓDULO 6: HISTORIAL
-        ===================================== -->
+        ======================================== -->
 
-        <section
-            class="mode single-column"
-            id="h">
+        <section class="mode single-column" id="h">
 
             <div class="card">
 
@@ -733,39 +602,68 @@
 
 
 <!-- ========================================
-     ARCHIVOS JAVASCRIPT
+     SCRIPTS DE SEÑALIVE
 ======================================== -->
 
-
-<!-- 1. NAVEGACIÓN E INTERFAZ -->
+<!-- 1. NAVEGACIÓN -->
 <script src="./js/app.js"></script>
 
-
-<!-- 2. RECOLECCIÓN DE MUESTRAS -->
+<!-- 2. DATASET DE LETRAS ESTÁTICAS -->
 <script
     type="module"
-    src="./js/dataset.js">
+    src="./js/dataset.js?v=2">
 </script>
-
 
 <!-- 3. CÁMARA Y MEDIAPIPE -->
 <script
     type="module"
-    src="./js/camera.js">
+    src="./js/camera.js?v=7">
 </script>
-
 
 <!-- 4. TENSORFLOW.JS -->
 <script
     src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js">
 </script>
 
-
-<!-- 5. TRADUCTOR DE 24 LETRAS -->
+<!-- 5. TRADUCTOR DE 24 LETRAS ESTÁTICAS -->
 <script
     type="module"
-    src="./js/traductor.js?v=24">
+    src="./js/traductor.js?v=43">
 </script>
+
+<!-- 6. RECONOCIMIENTO AUTOMÁTICO J Y Z -->
+<script
+    type="module"
+    src="./js/movimientos.js?v=21">
+</script>
+
+<!-- 7. CAPTURA DE SECUENCIAS DE MOVIMIENTO -->
+<script
+    type="module"
+    src="./js/dataset-movimientos.js?v=1">
+</script>
+
+<!-- 8. RECONOCIMIENTO AUTOMÁTICO DE PALABRAS -->
+<script
+    type="module"
+    src="./js/palabras-asl.js?v=17">
+</script>
+
+<!-- 9. MODO APRENDIZAJE -->
+<script defer src="./js/aprendizaje.js?v=3"></script>
+
+<!-- 10. JUEGO: DELETREA LA PALABRA -->
+<script defer src="./js/juego.js?v=1"></script>
+
+
+<!-- DICCIONARIO VISUAL FUNCIONAL -->
+<script defer src="./js/diccionario.js?v=1"></script>
+
+<!-- HISTORIAL DE SEÑALIVE -->
+<script defer src="./js/historial.js?v=1"></script>
+
+<!-- INTERFAZ PROFESIONAL DE SEÑALIVE -->
+<script src="./js/interfaz-traductor.js?v=4"></script>
 
 
 </body>
